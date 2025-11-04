@@ -1,0 +1,55 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "cf-ai-assitant",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-11-01",
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./public"
+	},
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    // Used to construct the MCP OAuth callback URL during local dev
+    "SERVER_HOST": "http://127.0.0.1:8787"
+  },
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "CFA_PLAN_AGENT",
+				"class_name": "PlannerAgent"
+			},
+			{
+				"name": "CFA_CODE_AGENT",
+				"class_name": "CoderAgent"
+			}
+		]
+	},
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": [
+				"PlannerAgent",
+				"CoderAgent"
+			]
+		}
+	],
+	"workflows": [
+		{
+			"name": "workflows-hello-world",
+			"binding": "BUILD_SITEFLOW",
+			"class_name": "BuildSiteFlow"
+		}
+	],
+	"ai": {
+		"binding": "AI"
+	}
+}

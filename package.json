@@ -1,0 +1,19 @@
+{
+	"name": "cf-ai-assitant",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"deploy": "wrangler deploy",
+		"start": "wrangler dev",
+		"dev": "wrangler dev",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"typescript": "^5.0.4",
+		"wrangler": "^4.45.3"
+	},
+	"dependencies": {
+		"agents": "^0.2.20",
+		"openai": "^6.8.0"
+	}
+}

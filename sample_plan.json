@@ -1,0 +1,182 @@
+{
+  "type": "done",
+  "json": {
+    "cloudflare_only": true,
+    "assumptions": [
+      "All infrastructure (hosting, APIs, storage) must use Cloudflare Developer Platform services only.",
+      "Images will be stored in a single R2 bucket (named 'cat-pics' in examples).",
+      "Authentication/anti-abuse is optional; Turnstile can be added if desired.",
+      "Uploads come from a browser form (multipart/form-data) or via fetch/XHR.",
+      "Project uses wrangler (or Cloudflare dashboard) to create and deploy Workers, R2, and Pages."
+    ],
+    "risks": [
+      "Large image uploads may incur bandwidth and storage costs; consider size limits and TTL/caching.",
+      "R2 list operations may be paginated; UI must handle continuation tokens for large numbers of objects.",
+      "If no access control is added, the upload endpoint may be abused; consider Turnstile or server-side validation.",
+      "CORS and content-type handling must be correct to display images in browser."
+    ],
+    "development_plan": [
+      {
+        "step": 1,
+        "title": "Create a Pages site for the static frontend",
+        "description": "Initialize a Git repository containing a minimal static site (HTML/CSS/JS) that shows cat pictures and provides an upload form. The frontend will call API endpoints (e.g., /api/list, /api/upload).",
+        "actions": [
+          "Create index.html with gallery and upload form.",
+          "Use simple JavaScript to call GET /api/list to retrieve image metadata and display images by their image URLs.",
+          "Use POST /api/upload to send new images (multipart/form-data or base64 payload)."
+        ],
+        "commands": [
+          "git init",
+          "Create files: index.html, app.js, style.css"
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Create a Worker to implement the API endpoints",
+        "description": "Use a Cloudflare Worker to handle uploads, list objects in R2, and serve image bytes from R2 (so the domain is consistent and edge caching works). Bind the R2 bucket to the Worker.",
+        "actions": [
+          "Create endpoints: GET /api/list, POST /api/upload, GET /api/img/:key",
+          "Implement POST /api/upload to accept multipart/form-data or application/json with base64 image; validate size/type, generate unique key (e.g., timestamp + random), write to R2 with proper content-type and metadata.",
+          "Implement GET /api/list to call R2.list and return object keys, sizes, content-type, and public URLs (Worker route to /api/img/:key).",
+          "Implement GET /api/img/:key to readObject from R2 and return Response with content-type and caching headers."
+        ],
+        "notes": [
+          "Store minimal metadata in R2 object metadata if needed (uploader, timestamp).",
+          "Consider returning pre-signed URLs only if you want direct uploads given allowed pattern; otherwise send uploads to Worker which writes to R2."
+        ],
+        "commands": [
+          "wrangler init worker-cat-api",
+          "Implement worker code in src/index.js",
+          "Use bindings in wrangler.toml to attach R2 bucket (see deployment_plan for example)."
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Create the R2 bucket",
+        "description": "Create an R2 bucket to store image objects.",
+        "actions": [
+          "In Cloudflare dashboard -> R2 -> Create bucket named 'cat-pics' (or via wrangler).",
+          "Ensure the Worker(s) have R2 bindings to access the bucket."
+        ],
+        "commands": [
+          "wrangler r2 create cat-pics --binding CAT_PICS --bucket",
+          "(Or create via Cloudflare dashboard)"
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Wire Pages and Worker routes",
+        "description": "Host the static frontend on Pages and route API calls to the Worker so both share the same domain/origin.",
+        "actions": [
+          "Deploy frontend to Pages.",
+          "Configure a route in Cloudflare to direct /api/* (or specific paths) to the deployed Worker so the Pages site can call APIs on same-origin to avoid CORS.",
+          "Alternatively, use Pages Functions if you prefer (but ensure R2 binding availability — Workers with explicit R2 binding is recommended)."
+        ],
+        "notes": [
+          "Mapping /api/* to the Worker ensures easier integration and consistent domain for images."
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Local testing and iteration",
+        "description": "Test the flow locally and on Cloudflare dev environments.",
+        "actions": [
+          "Use wrangler dev to test Worker endpoints and wrangler pages dev to view static site.",
+          "Test upload, listing, and direct image display.",
+          "Ensure correct content-type and caching headers."
+        ],
+        "commands": [
+          "wrangler dev --experimental-services (as needed)",
+          "wrangler pages dev (from Pages project directory)"
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Optional: Anti-abuse and metadata",
+        "description": "If public uploads are allowed, add Turnstile on the upload form and validate on the Worker. Optionally use KV or D1 for richer metadata/search.",
+        "actions": [
+          "Add Cloudflare Turnstile CAPTCHA to the upload form and verify token in the Worker.",
+          "Use KV to cache list responses or store metadata if you need fast lookups.",
+          "Add image size limits and file type checks in Worker."
+        ]
+      }
+    ],
+    "deployment_plan": [
+      {
+        "step": 1,
+        "title": "Create Cloudflare resources",
+        "description": "Set up R2, Pages, and Worker in the Cloudflare dashboard or via wrangler.",
+        "actions": [
+          "Create R2 bucket 'cat-pics'.",
+          "Create a Pages project connected to your Git repository (or deploy manually).",
+          "Create a Worker project for the API using wrangler or the dashboard."
+        ]
+      },
+      {
+        "step": 2,
+        "title": "Configure wrangler.toml bindings",
+        "description": "Add R2 binding to the Worker and set the account and zone info.",
+        "example": {
+          "wrangler_toml": "[[r2_buckets]]\nbinding = \"CAT_PICS\"\nbucket_name = \"cat-pics\"\n\nname = \"cat-api\"\nmain = \"src/index.js\"\naccount_id = \"<ACCOUNT_ID>\"\ncompatibility_date = \"2025-01-01\""
+        },
+        "notes": [
+          "Replace <ACCOUNT_ID> with your Cloudflare account ID.",
+          "You can also add secrets or Turnstile keys via wrangler secret put."
+        ]
+      },
+      {
+        "step": 3,
+        "title": "Deploy the Worker",
+        "description": "Publish the Worker that implements the API endpoints and has the R2 binding.",
+        "commands": [
+          "wrangler publish --env production"
+        ],
+        "notes": [
+          "Verify the Worker routes are attached to your Pages domain path (e.g., example.pages.dev/api/*) or set up a Worker route in Cloudflare to forward /api/* to the Worker."
+        ]
+      },
+      {
+        "step": 4,
+        "title": "Deploy Pages frontend",
+        "description": "Deploy the static site to Pages so it serves the gallery and upload UI.",
+        "actions": [
+          "Connect Git repository to Pages and configure build settings (if needed).",
+          "Ensure the frontend calls /api/list and /api/upload relative to same origin."
+        ],
+        "commands": [
+          "Push main branch to Git provider and let Pages build and deploy."
+        ]
+      },
+      {
+        "step": 5,
+        "title": "Route configuration",
+        "description": "Ensure API requests are routed to the Worker while static assets are served by Pages.",
+        "actions": [
+          "In the Cloudflare dashboard, create a route binding for your domain: e.g., example.com/api/* -> Worker 'cat-api'.",
+          "Or configure Pages custom functions routing if using Pages + Functions and Worker integration."
+        ]
+      },
+      {
+        "step": 6,
+        "title": "Testing and validation",
+        "description": "Verify full flow on production domain.",
+        "checks": [
+          "Upload an image via the frontend; confirm it appears in the gallery.",
+          "Confirm GET /api/list returns expected objects and pagination handling for many objects.",
+          "Confirm GET /api/img/:key serves proper content-type and caching headers."
+        ]
+      },
+      {
+        "step": 7,
+        "title": "Optional production hardening",
+        "description": "Add optional features before public launch.",
+        "actions": [
+          "Add Turnstile verification for uploads (use wrangler secret put to store keys).",
+          "Add rate-limiting or simple abuse protection using Workers (in-memory or Durable Objects if complex coordination required).",
+          "Set lifecycle rules (if available) to purge old objects or implement retention cost controls.",
+          "Enable logging and observability in Cloudflare for Workers and Pages."
+        ]
+      }
+    ]
+  }
+}
