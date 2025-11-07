@@ -1,0 +1,88 @@
+:root {
+  --bg: #0b1220;
+  --fg: #dbe6ff;
+  --muted: #9aa9c8;
+  --card: #121a2c;
+  --accent: #6ba8ff;
+  --ok: #27c093;
+  --warn: #e3b341;
+  --err: #ff6b6b;
+  --border: #22314f;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--fg);
+}
+
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+}
+.container.small { max-width: 900px; }
+
+.header {
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #0d172b 0%, #0b1220 100%);
+}
+.header h1 { margin: 0; font-size: 28px; }
+.header .sub { margin: 6px 0 0; color: var(--muted); }
+
+.intro { margin: 20px 0 12px; }
+.intro ul { margin: 8px 0 0 18px; }
+.intro .note { margin-top: 8px; color: var(--muted); }
+.intro a { color: var(--accent); }
+
+.auth, .flows { margin: 18px 0; }
+.auth .auth-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.auth .role { border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: #0c1425; }
+.auth .role h4 { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+.auth .linklist { display: flex; flex-direction: column; gap: 8px; }
+.auth .linklist a.btn { width: fit-content; }
+.flow-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.card h3 { margin: 0 0 6px; }
+.desc { color: var(--muted); margin: 0 0 10px; }
+.lbl { display: block; font-size: 13px; color: var(--muted); margin: 6px 0; }
+.txt { width: 100%; padding: 10px; background: #0b1220; color: var(--fg); border: 1px solid var(--border); border-radius: 8px; resize: vertical; }
+.actions { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+
+button, .btn {
+  background: var(--accent);
+  color: #04122e;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn.secondary { background: #1b2a49; color: var(--fg); border: 1px solid var(--border); }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.output {
+  background: #0b1220;
+  border: 1px solid var(--border);
+  padding: 10px;
+  border-radius: 8px;
+  color: #cdd7f6;
+  white-space: normal;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.footer { padding: 12px 0; border-top: 1px solid var(--border); color: var(--muted); }
+.footer .container { display: flex; justify-content: space-between; align-items: center; }

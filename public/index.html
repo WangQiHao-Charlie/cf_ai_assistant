@@ -1,19 +1,91 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Hello, World!</title>
-	</head>
-	<body>
-		<h1 id="heading"></h1>
-		<script>
-			fetch('/message')
-				.then((resp) => resp.text())
-				.then((text) => {
-					const h1 = document.getElementById('heading');
-					h1.textContent = text;
-				});
-		</script>
-	</body>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare Expert</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="header">
+      <div class="container">
+        <h1>Cloudflare Expert</h1>
+        <p class="sub">A Cloudflare-focused multi‑agent assistant</p>
+      </div>
+    </header>
+
+    <main class="container">
+      <section class="intro">
+        <p>This product has three capability tiers:</p>
+        <ul>
+          <li>Step 1: Read docs and suggest a Cloudflare architecture (Planner Agent).</li>
+          <li>Step 2: Plan and also generate code (Planner + Coder Agents).</li>
+          <li>Step 3: Plan + Generate + Deploy (Planner + Full‑stack Agent).
+            <strong>Note: Experimental — deployment flow is not fully tuned yet.</strong>
+          </li>
+        </ul>
+        <p class="note">
+          Before using Cloudflare/MCP tools, please authorize OAuth scopes at:
+          <a href="http://127.0.0.1:8787/mcp/auth" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8787/mcp/auth</a>
+        </p>
+      </section>
+
+      <section class="auth">
+        <h2>OAuth Authorization</h2>
+        <p>Click below to fetch pending authorization links for each agent, then authorize in a new tab.</p>
+        <div class="actions">
+          <button id="btn-auth-check">Check authorization status</button>
+          <a class="btn secondary" href="/mcp/auth" target="_blank" rel="noopener noreferrer">Open raw JSON</a>
+        </div>
+        <div id="auth-status" class="output"></div>
+      </section>
+
+      <section class="flows">
+        <h2>Flows</h2>
+        <div class="flow-grid">
+          <div class="card">
+            <h3>Step 1: Architecture (Planner)</h3>
+            <p class="desc">Read docs and produce Cloudflare architecture recommendations.</p>
+            <label class="lbl">Your requirement / context</label>
+            <textarea id="p1-input" class="txt" placeholder="e.g. a cat picture site on Pages with simple routing and cache..." rows="4"></textarea>
+            <div class="actions">
+              <button id="btn-plan">Generate plan</button>
+            </div>
+            <pre id="p1-output" class="output"></pre>
+          </div>
+
+          <div class="card">
+            <h3>Step 2: Plan + Code (Planner + Coder)</h3>
+            <p class="desc">Plan first, then generate initial code and a build artifact (no direct deploy).</p>
+            <label class="lbl">Your requirement / context</label>
+            <textarea id="p2-input" class="txt" placeholder="e.g. static index + styles + script, Pages direct upload..." rows="4"></textarea>
+            <div class="actions">
+              <button id="btn-plan-code">Plan and generate code</button>
+            </div>
+            <pre id="p2-output" class="output"></pre>
+          </div>
+
+          <div class="card">
+            <h3>Step 3: Plan + Generate + Deploy (Planner + Full‑stack)</h3>
+            <p class="desc"><strong>Experimental:</strong> end‑to‑end automation. Deployment is not fully tuned yet.</p>
+            <label class="lbl">Your requirement / context</label>
+            <textarea id="p3-input" class="txt" placeholder="e.g. auto‑create a Pages project and deploy via direct upload..." rows="4"></textarea>
+            <div class="actions">
+              <button id="btn-plan-full">Plan and try end‑to‑end deploy</button>
+            </div>
+            <pre id="p3-output" class="output"></pre>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container small">
+        <span>Cloudflare Expert — Local Demo</span>
+        <span id="ping"></span>
+      </div>
+    </footer>
+
+    <script src="/app.js" type="module"></script>
+  </body>
 </html>

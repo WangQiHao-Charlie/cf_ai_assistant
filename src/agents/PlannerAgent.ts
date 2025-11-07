@@ -9,7 +9,7 @@ export class PlannerAgent extends BaseAgent<Env> {
   constructor(state: DurableObjectState, env: Env) {
     const schemaDef = buildPlannerJsonSchema();
     super(state, env, {
-      defaultModel: 'gpt-5-mini',
+      defaultModel: 'gpt-5',
       temperature: 1,
       systemPrompt: 'Return ONLY via function call arguments. No extra text.',
       getUserPrompt: (payload: any) =>

@@ -26,15 +26,28 @@ export class WorkersAIChatModel implements IChatModel {
       temperature,
     } as any;
 
-    const result = await env.AI.run(model as keyof AiModels, chat as any);
-    if (typeof result === 'string') {
-      return {text: result};
+    try {
+      const result = await env.AI.run(model as keyof AiModels, chat as any);
+      if (typeof result === 'string') {
+        return {text: result};
+      }
+      if (result && typeof result === 'object' && 'response' in result) {
+        return {text: (result as {response?: string}).response ?? ''};
+      }
+      return {text: ''};
+    } catch (err: any) {
+      const msg = String(err?.message ?? err ?? '');
+      // Some models expect `{ input }` instead of chat `messages`. Retry once.
+      if (/oneOf|required properties|input|requests/i.test(msg)) {
+        const fallback = {input: [systemPrompt, userPrompt].filter(Boolean).join('\n\n')};
+        const result = await env.AI.run(model as keyof AiModels, fallback as any);
+        if (typeof result === 'string') return {text: result};
+        if (result && typeof result === 'object' && 'response' in result) {
+          return {text: (result as {response?: string}).response ?? ''};
+        }
+        return {text: ''};
+      }
+      throw err;
     }
-    if (result && typeof result === 'object' && 'response' in result) {
-      // Text-generation models return an object with optional `response`
-      return {text: (result as {response?: string}).response ?? ''};
-    }
-    // Fallback for non text-generation outputs
-    return {text: ''};
   }
 }

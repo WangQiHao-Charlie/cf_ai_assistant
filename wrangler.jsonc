@@ -14,13 +14,15 @@
 	"compatibility_flags": [
 		"nodejs_compat"
 	],
-  "observability": {
-    "enabled": true
-  },
-  "vars": {
-    // Used to construct the MCP OAuth callback URL during local dev
-    "SERVER_HOST": "http://127.0.0.1:8787"
-  },
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		// Used to construct the MCP OAuth callback URL during local dev
+		"SERVER_HOST": "http://127.0.0.1:8787",
+		// Set your account id for the local MCP publish server
+		"CF_ACCOUNT_ID": "29fa3816f926962a4e21a1c71db02ca9"
+	},
 	"durable_objects": {
 		"bindings": [
 			{
@@ -30,6 +32,14 @@
 			{
 				"name": "CFA_CODE_AGENT",
 				"class_name": "CoderAgent"
+			},
+			{
+				"name": "CFA_OP_AGENT",
+				"class_name": "OperatorAgent"
+			},
+			{
+				"name": "CFA_FULL_AGENT",
+				"class_name": "FullStackAgent"
 			}
 		]
 	},
@@ -39,6 +49,18 @@
 			"new_sqlite_classes": [
 				"PlannerAgent",
 				"CoderAgent"
+			]
+		},
+		{
+			"tag": "v2",
+			"new_sqlite_classes": [
+				"OperatorAgent"
+			]
+		},
+		{
+			"tag": "v3",
+			"new_sqlite_classes": [
+				"FullStackAgent"
 			]
 		}
 	],
@@ -50,6 +72,7 @@
 		}
 	],
 	"ai": {
-		"binding": "AI"
+		"binding": "AI",
+		"remote": true
 	}
 }

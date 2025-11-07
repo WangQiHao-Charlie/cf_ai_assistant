@@ -15,6 +15,15 @@ export type Env = BaseAgentEnv&{
       DurableObjectNamespace<Server<unknown, Record<string, unknown>>>;
   CFA_CODE_AGENT:
       DurableObjectNamespace<Server<unknown, Record<string, unknown>>>;
+  CFA_OP_AGENT:
+      DurableObjectNamespace<Server<unknown, Record<string, unknown>>>;
+  CFA_FULL_AGENT:
+      DurableObjectNamespace<Server<unknown, Record<string, unknown>>>;
+  // Workflows binding for BuildSiteFlow
+  BUILD_SITEFLOW: any;
+  // Account info and token for publishing MCP
+  CF_ACCOUNT_ID: string;
+  CF_API_TOKEN: string;
 };
 
 
@@ -23,5 +32,5 @@ export type McpTool = {
   name: string;
   description?: string;
   inputSchema?: any;
-  serverId?: string;  // 某些版本会在这里带上
+  serverId?: string;
 };
