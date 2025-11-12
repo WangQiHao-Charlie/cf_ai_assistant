@@ -1117,7 +1117,9 @@ Your previous reply did not include the required "site_zip_base64". Before respo
         callSummaries.push(`Tool: ${toolName}\nArgs: ${
             JSON.stringify(toolArgs, null, 2)}\nResult: ${toolResultJson}`);
 
-        // Auto-recovery: if a zip command failed due to missing 'zip', try to install it and retry the original zip command once.
+        // Auto-recovery: if a zip command failed due to missing 'zip', do not attempt
+        // to install system packages automatically. Instead, proceed to a
+        // best‑effort fallback below to create the zip via Python when possible.
         try {
           const isExec = this.normalizeToolName(toolName) === this.normalizeToolName('container_exec');
           const cmd = typeof commandArg === 'string' ? commandArg : '';
@@ -1126,70 +1128,7 @@ Your previous reply did not include the required "site_zip_base64". Before respo
           const missingZip = /\bzip\b[^\n]*not found/i.test(resText) || /command not found: zip/i.test(resText);
           if (isExec && looksLikeZipCmd && missingZip && !autoInstallZipAttempted) {
             autoInstallZipAttempted = true;
-            // Attempt to install zip via common package managers, then retry the original command
-            const installCmd = {
-              args: {
-                args:
-                  "sh -lc 'if command -v apt-get >/dev/null 2>&1; then apt-get update && apt-get install -y zip; " +
-                  "elif command -v apk >/dev/null 2>&1; then apk add --no-cache zip; " +
-                  "elif command -v microdnf >/dev/null 2>&1; then microdnf install -y zip; " +
-                  "elif command -v dnf >/dev/null 2>&1; then dnf install -y zip; " +
-                  "elif command -v yum >/dev/null 2>&1; then yum install -y zip; " +
-                  "elif command -v pacman >/dev/null 2>&1; then pacman -Sy --noconfirm zip; " +
-                  "else echo \"No supported package manager found\" >&2; exit 127; fi'",
-                streamStderr: true,
-                timeout: 60000,
-              }
-            } as any;
-            const resolvedExec = this.resolveTool(tools, 'container_exec', installCmd);
-            if (!(resolvedExec as any).emulate) {
-              const execServer = (resolvedExec as any).serverId as string;
-              const execName = (resolvedExec as any).name as string;
-              if (execServer && execName) {
-                console.log(`[MCP] auto-installing zip via ${execName}`);
-                try {
-                  const installRes = await this.mcpMgr.callTool({
-                    name: execName,
-                    serverId: execServer,
-                    arguments: installCmd,
-                  });
-                  const installJson = JSON.stringify(installRes, null, 2);
-                  mcpLogs.push({tool: execName, serverId: execServer, args: installCmd, result: installRes});
-                  callSummaries.push(`Tool: ${execName} (auto-install zip)\nArgs: ${JSON.stringify(installCmd, null, 2)}\nResult: ${installJson}`);
-                  roundMadeProgress = true;
-                } catch (e: any) {
-                  const emsg = String(e?.message ?? e);
-                  toolErrors.push(`container_exec(auto-install zip): ${emsg}`);
-                  callSummaries.push(`Tool: container_exec (auto-install zip)\nArgs: ${JSON.stringify(installCmd, null, 2)}\nError: ${emsg}`);
-                }
-
-                // Retry the original zip command regardless of install success
-                try {
-                  const retryArgs = {args: {args: cmd, streamStderr: true, timeout: 60000}} as any;
-                  const retryResolved = this.resolveTool(tools, 'container_exec', retryArgs);
-                  if (!(retryResolved as any).emulate) {
-                    const rServer = (retryResolved as any).serverId as string;
-                    const rName = (retryResolved as any).name as string;
-                    if (rServer && rName) {
-                      console.log(`[MCP] retrying original zip via ${rName}`);
-                      const retryRes = await this.mcpMgr.callTool({
-                        name: rName,
-                        serverId: rServer,
-                        arguments: retryArgs,
-                      });
-                      const retryJson = JSON.stringify(retryRes, null, 2);
-                      mcpLogs.push({tool: rName, serverId: rServer, args: retryArgs, result: retryRes});
-                      callSummaries.push(`Tool: ${rName} (auto-retry zip)\nArgs: ${JSON.stringify(retryArgs, null, 2)}\nResult: ${retryJson}`);
-                      roundMadeProgress = true;
-                    }
-                  }
-                } catch (e: any) {
-                  const emsg = String(e?.message ?? e);
-                  toolErrors.push(`container_exec(auto-retry zip): ${emsg}`);
-                  callSummaries.push(`Tool: container_exec (auto-retry zip)\nArgs: {\n  \"args\": { \"args\": ${JSON.stringify(cmd)} }\n}\nError: ${emsg}`);
-                }
-              }
-            }
+            // Skipping auto-installation of system 'zip' utility by design.
             // If the zip file still doesn't exist after retry, attempt a Python fallback to create it
             try {
               const checkArgs = {args: {args: "sh -lc 'test -f /tmp/site.zip && echo ZIP_OK || echo ZIP_MISSING'", streamStderr: true, timeout: 15000}} as any;
